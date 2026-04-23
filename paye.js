@@ -3,7 +3,7 @@ const itemTemplate = document.getElementById('itemTemplate');
 const homeScreen = document.getElementById('homeScreen');
 const invoiceApp = document.getElementById('invoiceApp');
 const startInvoiceBtn = document.getElementById('startInvoiceBtn');
-const previewInvoiceLink = document.getElementById('previewInvoiceLink');
+const previewInvoiceBtn = document.getElementById('previewInvoiceBtn');
 const backHomeBtn = document.getElementById('backHomeBtn');
 const subtotalEl = document.getElementById('subtotal');
 const vatEl = document.getElementById('vat');
@@ -37,13 +37,7 @@ const currencyFormat = new Intl.NumberFormat('fr-FR', {
   maximumFractionDigits: 2
 });
 
-let autoRedirectTimer = null;
-
 function showInvoiceApp() {
-  if (autoRedirectTimer) {
-    clearTimeout(autoRedirectTimer);
-    autoRedirectTimer = null;
-  }
   homeScreen.classList.add('is-hidden');
   invoiceApp.classList.remove('is-hidden');
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -272,10 +266,7 @@ addRowBtn.addEventListener('click', () => {
 
 startInvoiceBtn.addEventListener('click', showInvoiceApp);
 
-previewInvoiceLink.addEventListener('click', (event) => {
-  event.preventDefault();
-  showInvoiceApp();
-});
+previewInvoiceBtn.addEventListener('click', showInvoiceApp);
 
 backHomeBtn.addEventListener('click', showHomeScreen);
 
@@ -318,8 +309,4 @@ updateTotals();
 
 if (window.location.hash === '#facture') {
   showInvoiceApp();
-} else {
-  autoRedirectTimer = setTimeout(() => {
-    showInvoiceApp();
-  }, 4500);
 }

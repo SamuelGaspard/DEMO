@@ -82,7 +82,7 @@ html, body {
 
 .home-content h1 {
   margin: 12px 0 12px;
-  font-size: 46px;
+  font-size: 56px;
   line-height: 0.98;
   letter-spacing: 0.02em;
   color: #122d43;
@@ -93,11 +93,12 @@ html, body {
   color: #4d5d6d;
   line-height: 1.7;
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 20px;
 }
 
 .home-hint {
   margin-top: 10px !important;
-  font-size: 13px;
+  font-size: 17px;
   color: #2d5f68 !important;
   font-weight: 700;
 }
@@ -110,14 +111,9 @@ html, body {
   align-items: center;
 }
 
-.home-actions a {
-  text-decoration: none;
-  color: #0d5063;
-  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-  font-weight: 700;
-  font-size: 14px;
-  border-bottom: 2px solid rgba(13, 80, 99, 0.3);
-  padding-bottom: 1px;
+.home-actions button {
+  font-size: 17px;
+  padding: 14px 20px;
 }
 
 .toolbar {
@@ -681,7 +677,7 @@ td input {
   }
 
   .home-content h1 {
-    font-size: 34px;
+    font-size: 42px;
   }
 
   .header-grid,
