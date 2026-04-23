@@ -344,12 +344,6 @@
       padding: 18px;
     }
 
-    .qr-stage {
-      position: relative;
-      display: inline-grid;
-      place-items: center;
-    }
-
     .qr img {
       width: 220px;
       height: 220px;
@@ -357,25 +351,6 @@
       border: 8px solid white;
       border-radius: 10px;
       background: white;
-      display: block;
-    }
-
-    .qr-logo {
-      position: absolute;
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      background: #ffffff;
-      border: 2px solid #111111;
-      display: grid;
-      place-items: center;
-      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
-      pointer-events: none;
-    }
-
-    .qr-logo svg {
-      width: 68px;
-      height: 68px;
       display: block;
     }
 
@@ -512,20 +487,7 @@
           <div class="block">
             <h3>Mention légale</h3>
             <div class="qr">
-              <div class="qr-stage">
-                <img id="qrImage" alt="Code QR de la facture" />
-                <div class="qr-logo" aria-hidden="true">
-                  <svg viewBox="0 0 100 100" role="img" aria-label="DGI">
-                    <circle cx="50" cy="50" r="48" fill="#ffffff" stroke="#111111" stroke-width="4" />
-                    <circle cx="50" cy="50" r="37" fill="none" stroke="#111111" stroke-width="2.5" />
-                    <text x="50" y="23" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="1.5" fill="#111111">DIRECTION</text>
-                    <text x="50" y="90" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="1.5" fill="#111111">DES IMPOTS</text>
-                    <text x="50" y="58" text-anchor="middle" font-family="Georgia, serif" font-size="56" font-weight="700" fill="#d71920">D</text>
-                    <text x="53" y="67" text-anchor="middle" font-family="Georgia, serif" font-size="50" font-weight="700" fill="#d71920">G</text>
-                    <text x="60" y="58" text-anchor="middle" font-family="Georgia, serif" font-size="50" font-weight="700" fill="#d71920">I</text>
-                  </svg>
-                </div>
-              </div>
+              <img id="qrImage" alt="Code QR de la facture" />
             </div>
           </div>
         </div>
@@ -700,24 +662,24 @@
       const total = subtotal + vat;
 
       let payload = [
-        'FACTURE RDC',
-        `NO: ${invoiceNumber.value || ''}`,
-        `DATE: ${invoiceDate.value || ''}`,
-        `NI: ${issuerTax.value || ''}`,
-        `CLIENT: ${clientName.value || ''}`,
-        `HT: ${subtotal.toFixed(2)} FC`,
-        `TVA: ${vat.toFixed(2)} FC`,
-        `TTC: ${total.toFixed(2)} FC`
-      ].join('\n');
+        'DGI_FACTURE_RDC',
+        `NUM=${invoiceNumber.value || ''}`,
+        `EMIS_LE=${invoiceDate.value || ''}`,
+        `NI_FOURNISSEUR=${issuerTax.value || ''}`,
+        `CLIENT_NOM=${clientName.value || ''}`,
+        `MONTANT_HT_FC=${subtotal.toFixed(2)}`,
+        `MONTANT_TVA_FC=${vat.toFixed(2)}`,
+        `MONTANT_TTC_FC=${total.toFixed(2)}`
+      ].join('|');
 
       if (utf8Bytes(payload).length > 136) {
         payload = [
-          'FACTURE RDC',
-          `NO: ${invoiceNumber.value || ''}`,
-          `DATE: ${invoiceDate.value || ''}`,
-          `NI: ${issuerTax.value || ''}`,
-          `TTC: ${total.toFixed(2)} FC`
-        ].join('\n');
+          'DGI_FACTURE_RDC',
+          `NUM=${invoiceNumber.value || ''}`,
+          `EMIS_LE=${invoiceDate.value || ''}`,
+          `NI_FOURNISSEUR=${issuerTax.value || ''}`,
+          `MONTANT_TTC_FC=${total.toFixed(2)}`
+        ].join('|');
       }
 
       return payload;
@@ -1121,8 +1083,8 @@
 
     function updateQrCode() {
       const payload = buildQrPayload();
-      const matrix = buildQrMatrix(payload);
-      qrImage.src = svgDataUri(matrixToSvg(matrix));
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=420x420&margin=18&ecc=M&data=${encodeURIComponent(payload)}`;
+      qrImage.src = qrUrl;
     }
 
     function createRow(name = '', qty = 1, price = 0) {
