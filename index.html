@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Facture RDC - Générateur</title>
+  <style>
+    :root {
+      --bg: #f4efe7;
+      --panel: #fffaf2;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #d7c9b8;
+      --accent: #0f766e;
+      --accent-2: #b45309;
+      --soft: #f8f3ec;
+      --danger: #b91c1c;
+      --shadow: 0 18px 50px rgba(31, 41, 55, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 32%),
+        radial-gradient(circle at top right, rgba(180, 83, 9, 0.10), transparent 28%),
+        linear-gradient(180deg, #f8f2e8 0%, #efe4d6 100%);
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+    }
+
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .toolbar h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0.02em;
+    }
+
+    .toolbar p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+      box-shadow: 0 8px 18px rgba(31, 41, 55, 0.08);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .btn-danger {
+      background: #fef2f2;
+      color: var(--danger);
+      border: 1px solid #fecaca;
+      box-shadow: none;
+    }
+
+    .sheet {
+      background: var(--panel);
+      border: 1px solid rgba(215, 201, 184, 0.9);
+      box-shadow: var(--shadow);
+      border-radius: 24px;
+      overflow: hidden;
+    }
+
+    .invoice {
+      padding: 32px;
+    }
+
+    .header-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .brand {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #fff8ee 100%);
+    }
+
+    .brand h2,
+    .block h3,
+    .totals h3 {
+      margin: 0 0 14px;
+      font-size: 18px;
+      color: var(--accent);
+      letter-spacing: 0.02em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: white;
+      border-radius: 12px;
+      padding: 11px 12px;
+      font: inherit;
+      color: var(--ink);
+      outline: none;
+    }
+
+    textarea {
+      min-height: 48px;
+      resize: vertical;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .block {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .invoice-title {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 22px;
+    }
+
+    .invoice-title h2 {
+      margin: 0;
+      font-size: 34px;
+      letter-spacing: 0.06em;
+    }
+
+    .invoice-title .subtitle {
+      margin-top: 6px;
+      color: var(--muted);
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    .badge {
+      border: 1px dashed var(--accent-2);
+      background: #fff7ed;
+      color: #92400e;
+      border-radius: 16px;
+      padding: 14px 16px;
+      min-width: 240px;
+      font-family: Arial, sans-serif;
+    }
+
+    .badge strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 16px;
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 820px;
+    }
+
+    thead {
+      background: #f7efe4;
+    }
+
+    th,
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #eadfd2;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #7c5e3b;
+    }
+
+    td input {
+      background: #fffdf9;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .small-btn {
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      box-shadow: none;
+      white-space: nowrap;
+    }
+
+    .totals {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .note-box {
+      padding: 18px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, #fff, #fff8ef);
+      font-family: Arial, sans-serif;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .summary {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: white;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee3d5;
+      font-family: Arial, sans-serif;
+    }
+
+    .summary-row:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .summary-row strong {
+      font-size: 18px;
+    }
+
+    .summary-row .amount {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
+
+    .qr {
+      margin-top: 16px;
+      border: 2px dashed var(--line);
+      border-radius: 18px;
+      min-height: 150px;
+      display: grid;
+      place-items: center;
+      background: #faf6ef;
+      color: var(--muted);
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 18px;
+    }
+
+    .qr .box {
+      width: 96px;
+      height: 96px;
+      border: 10px solid #202020;
+      position: relative;
+      background:
+        linear-gradient(90deg, transparent 40%, #202020 40%, #202020 52%, transparent 52%),
+        linear-gradient(transparent 40%, #202020 40%, #202020 52%, transparent 52%);
+      background-size: 18px 18px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      opacity: 0.85;
+    }
+
+    .footer {
+      margin-top: 18px;
+      font-family: Arial, sans-serif;
+      color: var(--muted);
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .hidden-print {
+      display: block;
+    }
+
+    @media (max-width: 960px) {
+      .header-grid,
+      .meta-grid,
+      .totals {
+        grid-template-columns: 1fr;
+      }
+
+      .invoice {
+        padding: 22px;
+      }
+    }
+
+    @media print {
+      html, body {
+        background: white;
+      }
+
+      .app {
+        padding: 0;
+        max-width: none;
+      }
+
+      .toolbar,
+      .hidden-print,
+      button,
+      .actions {
+        display: none !important;
+      }
+
+      .sheet {
+        box-shadow: none;
+        border: 0;
+        border-radius: 0;
+      }
+
+      .invoice {
+        padding: 0.8cm;
+      }
+
+      input,
+      textarea {
+        border: 0;
+        padding: 0;
+        background: transparent;
+      }
+
+      .block,
+      .brand,
+      .table-wrap,
+      .summary,
+      .note-box {
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="toolbar hidden-print">
+      <div>
+        <h1>Générateur de facture RDC</h1>
+        <p>Modèle interactif avec TVA à 16 %, base imposable, net à payer et impression propre.</p>
+      </div>
+      <div class="actions">
+        <button class="btn-secondary" id="addRowBtn" type="button">Ajouter une ligne</button>
+        <button class="btn-primary" id="printBtn" type="button">Imprimer</button>
+      </div>
+    </div>
+
+    <div class="sheet">
+      <div class="invoice" id="invoice">
+        <div class="invoice-title">
+          <div>
+            <h2>FACTURE</h2>
+            <div class="subtitle">République Démocratique du Congo - Document de facturation normalisée</div>
+          </div>
+          <div class="badge">
+            Numéro de facture
+            <strong><input id="invoiceNumber" value="FAC-2026-0001" /></strong>
+            Date d’émission
+            <strong><input id="invoiceDate" type="date" /></strong>
+          </div>
+        </div>
+
+        <div class="header-grid">
+          <div class="brand block">
+            <h3>Émetteur</h3>
+            <div class="grid">
+              <div class="field"><label>Nom / Raison sociale</label><input id="issuerName" value="Entreprise Exemple SARL" /></div>
+              <div class="field"><label>Adresse</label><input id="issuerAddress" value="Avenue du Commerce, Kinshasa" /></div>
+              <div class="field"><label>N° RCCM</label><input id="issuerRccm" value="RCCM/CD/KIN/12345" /></div>
+              <div class="field"><label>N° Identification Nationale</label><input id="issuerId" value="IDN-2026-001122" /></div>
+              <div class="field" style="grid-column: 1 / -1;"><label>N° Impôt / NI</label><input id="issuerTax" value="A1234567Z" /></div>
+            </div>
+          </div>
+
+          <div class="block">
+            <h3>Client</h3>
+            <div class="grid">
+              <div class="field" style="grid-column: 1 / -1;"><label>Nom / Raison sociale</label><input id="clientName" value="Client Exemple" /></div>
+              <div class="field" style="grid-column: 1 / -1;"><label>Adresse</label><textarea id="clientAddress">Quartier commercial, Lubumbashi</textarea></div>
+              <div class="field" style="grid-column: 1 / -1;"><label>N° Impôt (si professionnel)</label><input id="clientTax" placeholder="Facultatif" /></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="meta-grid">
+          <div class="block">
+            <h3>Détails facture</h3>
+            <div class="grid">
+              <div class="field"><label>Numéro séquentiel</label><input value="Séquence automatique" disabled /></div>
+              <div class="field"><label>TVA applicable</label><input value="16 %" disabled /></div>
+            </div>
+          </div>
+
+          <div class="block">
+            <h3>Mention légale</h3>
+            <div class="qr">
+              <div>
+                <div class="box" aria-hidden="true"></div>
+                Zone QR / numéro de série machine fiscale DGI
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="block">
+          <h3>Articles</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 38%;">Désignation</th>
+                  <th style="width: 12%;">Quantité</th>
+                  <th style="width: 18%;">Prix unitaire HT</th>
+                  <th style="width: 18%;">Total HT</th>
+                  <th style="width: 14%;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="itemsBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="totals">
+          <div class="note-box">
+            Le numéro d’impôt du fournisseur doit apparaître clairement sur la facture pour la conformité fiscale.
+            Le calcul ci-contre applique automatiquement la TVA standard de 16 % et met à jour le total en temps réel.
+          </div>
+
+          <div class="summary">
+            <h3>Récapitulatif</h3>
+            <div class="summary-row"><span>Sous-total HT</span><span class="amount" id="subtotal">0,00 FC</span></div>
+            <div class="summary-row"><span>TVA (16 %)</span><span class="amount" id="vat">0,00 FC</span></div>
+            <div class="summary-row"><strong>Net à payer</strong><strong class="amount" id="grandTotal">0,00 FC</strong></div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <div>Document préparé pour l’impression A4.</div>
+          <div>Remplis les champs, ajoute les lignes, puis clique sur Imprimer.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <template id="itemTemplate">
+    <tr>
+      <td><input class="item-name" placeholder="Produit ou service" value="" /></td>
+      <td><input class="item-qty" type="number" min="0" step="1" value="1" /></td>
+      <td><input class="item-price" type="number" min="0" step="0.01" value="0" /></td>
+      <td><input class="item-total" type="text" value="0,00 FC" disabled /></td>
+      <td>
+        <div class="row-actions">
+          <button class="btn-danger small-btn remove-row" type="button">Supprimer</button>
+        </div>
+      </td>
+    </tr>
+  </template>
+
+  <script>
+    const itemsBody = document.getElementById('itemsBody');
+    const itemTemplate = document.getElementById('itemTemplate');
+    const subtotalEl = document.getElementById('subtotal');
+    const vatEl = document.getElementById('vat');
+    const grandTotalEl = document.getElementById('grandTotal');
+    const addRowBtn = document.getElementById('addRowBtn');
+    const printBtn = document.getElementById('printBtn');
+    const invoiceDate = document.getElementById('invoiceDate');
+
+    const currencyFormat = new Intl.NumberFormat('fr-FR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
+    function formatCurrency(value) {
+      return `${currencyFormat.format(value)} FC`;
+    }
+
+    function createRow(name = '', qty = 1, price = 0) {
+      const row = itemTemplate.content.cloneNode(true);
+      const tr = row.querySelector('tr');
+      const nameInput = row.querySelector('.item-name');
+      const qtyInput = row.querySelector('.item-qty');
+      const priceInput = row.querySelector('.item-price');
+      const totalInput = row.querySelector('.item-total');
+      const removeBtn = row.querySelector('.remove-row');
+
+      nameInput.value = name;
+      qtyInput.value = qty;
+      priceInput.value = price;
+      totalInput.value = formatCurrency(qty * price);
+
+      const updateRow = () => {
+        const currentQty = parseFloat(qtyInput.value) || 0;
+        const currentPrice = parseFloat(priceInput.value) || 0;
+        totalInput.value = formatCurrency(currentQty * currentPrice);
+        updateTotals();
+      };
+
+      nameInput.addEventListener('input', updateRow);
+      qtyInput.addEventListener('input', updateRow);
+      priceInput.addEventListener('input', updateRow);
+      removeBtn.addEventListener('click', () => {
+        tr.remove();
+        updateTotals();
+        if (itemsBody.children.length === 0) {
+          addInitialRow();
+        }
+      });
+
+      itemsBody.appendChild(tr);
+    }
+
+    function addInitialRow() {
+      if (itemsBody.children.length === 0) {
+        createRow('Prestation initiale', 1, 0);
+      }
+    }
+
+    function updateTotals() {
+      let subtotal = 0;
+      itemsBody.querySelectorAll('tr').forEach((tr) => {
+        const qty = parseFloat(tr.querySelector('.item-qty').value) || 0;
+        const price = parseFloat(tr.querySelector('.item-price').value) || 0;
+        const total = qty * price;
+        tr.querySelector('.item-total').value = formatCurrency(total);
+        subtotal += total;
+      });
+
+      const vat = subtotal * 0.16;
+      const grandTotal = subtotal + vat;
+
+      subtotalEl.textContent = formatCurrency(subtotal);
+      vatEl.textContent = formatCurrency(vat);
+      grandTotalEl.textContent = formatCurrency(grandTotal);
+    }
+
+    addRowBtn.addEventListener('click', () => {
+      createRow();
+      updateTotals();
+    });
+
+    printBtn.addEventListener('click', () => {
+      window.print();
+    });
+
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    invoiceDate.value = `${year}-${month}-${day}`;
+
+    createRow('Prestation initiale', 1, 0);
+    createRow('Frais de service', 2, 0);
+    updateTotals();
+  </script>
+</body>
+</html>
