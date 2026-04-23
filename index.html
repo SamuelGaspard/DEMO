@@ -569,8 +569,91 @@
       maximumFractionDigits: 2
     });
 
-    function formatCurrency(value) {
-      return `${currencyFormat.format(value)} FC`;
+    const QR_VERSION = 6;
+    const QR_SIZE = QR_VERSION * 4 + 17;
+    const QR_ECC_LEVEL_BITS = 1;
+    const QR_BLOCKS = [
+      { totalCount: 86, dataCount: 68 },
+      { totalCount: 86, dataCount: 68 }
+    ];
+
+    const GF_EXP = new Array(512);
+    const GF_LOG = new Array(256);
+    let gfReady = false;
+
+    function initGaloisField() {
+      if (gfReady) {
+        return;
+      }
+
+      let x = 1;
+      for (let i = 0; i < 255; i += 1) {
+        GF_EXP[i] = x;
+        GF_LOG[x] = i;
+        x <<= 1;
+        if (x & 0x100) {
+          x ^= 0x11d;
+        }
+      }
+
+      for (let i = 255; i < 512; i += 1) {
+        GF_EXP[i] = GF_EXP[i - 255];
+      }
+
+      gfReady = true;
+    }
+
+    function gfMultiply(a, b) {
+      if (a === 0 || b === 0) {
+        return 0;
+      }
+
+      initGaloisField();
+      return GF_EXP[GF_LOG[a] + GF_LOG[b]];
+    }
+
+    function polynomialMultiply(first, second) {
+      const result = new Array(first.length + second.length - 1).fill(0);
+
+      for (let i = 0; i < first.length; i += 1) {
+        for (let j = 0; j < second.length; j += 1) {
+          result[i + j] ^= gfMultiply(first[i], second[j]);
+        }
+      }
+
+      return result;
+    }
+
+    function buildGeneratorPolynomial(degree) {
+      let polynomial = [1];
+
+      for (let i = 0; i < degree; i += 1) {
+        polynomial = polynomialMultiply(polynomial, [1, GF_EXP[i]]);
+      }
+
+      return polynomial;
+    }
+
+    function reedSolomonRemainder(data, degree) {
+      const generator = buildGeneratorPolynomial(degree);
+      const message = data.concat(new Array(degree).fill(0));
+
+      for (let i = 0; i < data.length; i += 1) {
+        const factor = message[i];
+        if (factor === 0) {
+          continue;
+        }
+
+        for (let j = 0; j < generator.length; j += 1) {
+          message[i + j] ^= gfMultiply(generator[j], factor);
+        }
+      }
+
+      return message.slice(data.length);
+    }
+
+    function utf8Bytes(text) {
+      return Array.from(new TextEncoder().encode(text));
     }
 
     function buildQrPayload() {
@@ -582,7 +665,7 @@
       const vat = subtotal * 0.16;
       const total = subtotal + vat;
 
-      return [
+      let payload = [
         'RDC-INVOICE',
         `NO=${invoiceNumber.value || ''}`,
         `DATE=${invoiceDate.value || ''}`,
@@ -592,12 +675,420 @@
         `TVA=${vat.toFixed(2)}`,
         `TTC=${total.toFixed(2)}`
       ].join('|');
+
+      if (utf8Bytes(payload).length > 136) {
+        payload = [
+          'RDC-INVOICE',
+          `NO=${invoiceNumber.value || ''}`,
+          `DATE=${invoiceDate.value || ''}`,
+          `NI=${issuerTax.value || ''}`,
+          `TTC=${total.toFixed(2)}`
+        ].join('|');
+      }
+
+      return payload;
+    }
+
+    function formatCurrency(value) {
+      return `${currencyFormat.format(value)} FC`;
+    }
+
+    function createEmptyMatrix() {
+      return Array.from({ length: QR_SIZE }, () => Array(QR_SIZE).fill(null));
+    }
+
+    function createReservedMatrix() {
+      return Array.from({ length: QR_SIZE }, () => Array(QR_SIZE).fill(false));
+    }
+
+    function reserveCell(matrix, reserved, row, col, value = false) {
+      if (row < 0 || col < 0 || row >= QR_SIZE || col >= QR_SIZE) {
+        return;
+      }
+
+      matrix[row][col] = value;
+      reserved[row][col] = true;
+    }
+
+    function drawFinderPattern(matrix, reserved, top, left) {
+      for (let row = -1; row <= 7; row += 1) {
+        for (let col = -1; col <= 7; col += 1) {
+          const targetRow = top + row;
+          const targetCol = left + col;
+
+          if (targetRow < 0 || targetCol < 0 || targetRow >= QR_SIZE || targetCol >= QR_SIZE) {
+            continue;
+          }
+
+          if (row === -1 || row === 7 || col === -1 || col === 7) {
+            reserveCell(matrix, reserved, targetRow, targetCol, false);
+            continue;
+          }
+
+          const dark = row === 0 || row === 6 || col === 0 || col === 6 || (row >= 2 && row <= 4 && col >= 2 && col <= 4);
+          reserveCell(matrix, reserved, targetRow, targetCol, dark);
+        }
+      }
+    }
+
+    function drawAlignmentPattern(matrix, reserved, centerRow, centerCol) {
+      for (let row = -2; row <= 2; row += 1) {
+        for (let col = -2; col <= 2; col += 1) {
+          const targetRow = centerRow + row;
+          const targetCol = centerCol + col;
+          const distance = Math.max(Math.abs(row), Math.abs(col));
+          const dark = distance === 2 || (row === 0 && col === 0);
+          reserveCell(matrix, reserved, targetRow, targetCol, dark);
+        }
+      }
+    }
+
+    function drawTimingPatterns(matrix, reserved) {
+      for (let index = 8; index < QR_SIZE - 8; index += 1) {
+        const dark = index % 2 === 0;
+        reserveCell(matrix, reserved, 6, index, dark);
+        reserveCell(matrix, reserved, index, 6, dark);
+      }
+    }
+
+    function drawDarkModule(matrix, reserved) {
+      reserveCell(matrix, reserved, 4 * QR_VERSION + 9, 8, true);
+    }
+
+    function reserveFormatInformationAreas(matrix, reserved) {
+      for (let index = 0; index < 9; index += 1) {
+        if (index !== 6) {
+          reserveCell(matrix, reserved, 8, index, false);
+          reserveCell(matrix, reserved, index, 8, false);
+        }
+      }
+
+      for (let index = 0; index < 8; index += 1) {
+        reserveCell(matrix, reserved, QR_SIZE - 1 - index, 8, false);
+        reserveCell(matrix, reserved, 8, QR_SIZE - 1 - index, false);
+      }
+    }
+
+    function maskFunction(maskIndex, row, col) {
+      switch (maskIndex) {
+        case 0: return (row + col) % 2 === 0;
+        case 1: return row % 2 === 0;
+        case 2: return col % 3 === 0;
+        case 3: return (row + col) % 3 === 0;
+        case 4: return (Math.floor(row / 2) + Math.floor(col / 3)) % 2 === 0;
+        case 5: return ((row * col) % 2) + ((row * col) % 3) === 0;
+        case 6: return ((((row * col) % 2) + ((row * col) % 3)) % 2) === 0;
+        case 7: return ((((row + col) % 2) + ((row * col) % 3)) % 2) === 0;
+        default: return false;
+      }
+    }
+
+    function formatBits(maskIndex) {
+      let data = (QR_ECC_LEVEL_BITS << 3) | maskIndex;
+      let bits = data << 10;
+      const generator = 0x537;
+
+      for (let bit = 14; bit >= 10; bit -= 1) {
+        if (((bits >> bit) & 1) !== 0) {
+          bits ^= generator << (bit - 10);
+        }
+      }
+
+      return ((data << 10) | bits) ^ 0x5412;
+    }
+
+    function placeFormatInformation(matrix, maskIndex) {
+      const bits = formatBits(maskIndex);
+      const first = [
+        [8, 0], [8, 1], [8, 2], [8, 3], [8, 4], [8, 5],
+        [8, 7], [8, 8], [7, 8], [5, 8], [4, 8], [3, 8], [2, 8], [1, 8], [0, 8]
+      ];
+      const second = [
+        [QR_SIZE - 1, 8], [QR_SIZE - 2, 8], [QR_SIZE - 3, 8], [QR_SIZE - 4, 8],
+        [QR_SIZE - 5, 8], [QR_SIZE - 6, 8], [QR_SIZE - 7, 8], [QR_SIZE - 8, 8],
+        [8, QR_SIZE - 8], [8, QR_SIZE - 7], [8, QR_SIZE - 6], [8, QR_SIZE - 5],
+        [8, QR_SIZE - 4], [8, QR_SIZE - 3], [8, QR_SIZE - 2]
+      ];
+
+      first.forEach(([row, col], index) => {
+        matrix[row][col] = ((bits >> (14 - index)) & 1) === 1;
+      });
+
+      second.forEach(([row, col], index) => {
+        matrix[row][col] = ((bits >> (14 - index)) & 1) === 1;
+      });
+    }
+
+    function createDataCodewords(payload) {
+      initGaloisField();
+
+      const bytes = utf8Bytes(payload);
+      const bitBuffer = [];
+
+      const pushBits = (value, length) => {
+        for (let bit = length - 1; bit >= 0; bit -= 1) {
+          bitBuffer.push((value >> bit) & 1);
+        }
+      };
+
+      pushBits(0b0100, 4);
+      pushBits(bytes.length, 8);
+
+      bytes.forEach((byte) => pushBits(byte, 8));
+
+      const totalDataBytes = QR_BLOCKS.reduce((sum, block) => sum + block.dataCount, 0);
+      const totalDataBits = totalDataBytes * 8;
+
+      if (bitBuffer.length + 4 <= totalDataBits) {
+        pushBits(0, 4);
+      }
+
+      while (bitBuffer.length % 8 !== 0) {
+        bitBuffer.push(0);
+      }
+
+      const padBytes = [0xec, 0x11];
+      let padIndex = 0;
+      while (bitBuffer.length < totalDataBits) {
+        pushBits(padBytes[padIndex % 2], 8);
+        padIndex += 1;
+      }
+
+      const dataBytes = [];
+      for (let i = 0; i < bitBuffer.length; i += 8) {
+        let value = 0;
+        for (let bit = 0; bit < 8; bit += 1) {
+          value = (value << 1) | bitBuffer[i + bit];
+        }
+        dataBytes.push(value);
+      }
+
+      const dataBlocks = [];
+      let offset = 0;
+      for (const block of QR_BLOCKS) {
+        const blockData = dataBytes.slice(offset, offset + block.dataCount);
+        offset += block.dataCount;
+        dataBlocks.push({
+          data: blockData,
+          ec: reedSolomonRemainder(blockData, block.totalCount - block.dataCount)
+        });
+      }
+
+      const interleaved = [];
+      const maxDataLength = Math.max(...dataBlocks.map((block) => block.data.length));
+      for (let index = 0; index < maxDataLength; index += 1) {
+        for (const block of dataBlocks) {
+          if (index < block.data.length) {
+            interleaved.push(block.data[index]);
+          }
+        }
+      }
+
+      const maxEcLength = Math.max(...dataBlocks.map((block) => block.ec.length));
+      for (let index = 0; index < maxEcLength; index += 1) {
+        for (const block of dataBlocks) {
+          if (index < block.ec.length) {
+            interleaved.push(block.ec[index]);
+          }
+        }
+      }
+
+      return interleaved;
+    }
+
+    function placeData(matrix, reserved, codewords, maskIndex) {
+      let bitIndex = 0;
+      let direction = -1;
+
+      for (let col = QR_SIZE - 1; col > 0; col -= 2) {
+        if (col === 6) {
+          col -= 1;
+        }
+
+        for (let rowOffset = 0; rowOffset < QR_SIZE; rowOffset += 1) {
+          const row = direction === -1 ? QR_SIZE - 1 - rowOffset : rowOffset;
+
+          for (let currentCol = col; currentCol >= col - 1; currentCol -= 1) {
+            if (reserved[row][currentCol]) {
+              continue;
+            }
+
+            const byteIndex = Math.floor(bitIndex / 8);
+            const bitOffset = 7 - (bitIndex % 8);
+            const bit = byteIndex < codewords.length ? ((codewords[byteIndex] >> bitOffset) & 1) : 0;
+            matrix[row][currentCol] = (bit ^ (maskFunction(maskIndex, row, currentCol) ? 1 : 0)) === 1;
+            bitIndex += 1;
+          }
+        }
+
+        direction *= -1;
+      }
+    }
+
+    function cloneMatrix(matrix) {
+      return matrix.map((row) => row.slice());
+    }
+
+    function penaltyScore(matrix) {
+      let penalty = 0;
+
+      for (let row = 0; row < QR_SIZE; row += 1) {
+        let runColor = matrix[row][0];
+        let runLength = 1;
+
+        for (let col = 1; col < QR_SIZE; col += 1) {
+          if (matrix[row][col] === runColor) {
+            runLength += 1;
+          } else {
+            if (runLength >= 5) {
+              penalty += 3 + (runLength - 5);
+            }
+            runColor = matrix[row][col];
+            runLength = 1;
+          }
+        }
+
+        if (runLength >= 5) {
+          penalty += 3 + (runLength - 5);
+        }
+      }
+
+      for (let col = 0; col < QR_SIZE; col += 1) {
+        let runColor = matrix[0][col];
+        let runLength = 1;
+
+        for (let row = 1; row < QR_SIZE; row += 1) {
+          if (matrix[row][col] === runColor) {
+            runLength += 1;
+          } else {
+            if (runLength >= 5) {
+              penalty += 3 + (runLength - 5);
+            }
+            runColor = matrix[row][col];
+            runLength = 1;
+          }
+        }
+
+        if (runLength >= 5) {
+          penalty += 3 + (runLength - 5);
+        }
+      }
+
+      for (let row = 0; row < QR_SIZE - 1; row += 1) {
+        for (let col = 0; col < QR_SIZE - 1; col += 1) {
+          const value = matrix[row][col];
+          if (
+            matrix[row][col + 1] === value &&
+            matrix[row + 1][col] === value &&
+            matrix[row + 1][col + 1] === value
+          ) {
+            penalty += 3;
+          }
+        }
+      }
+
+      const pattern = [true, false, true, true, true, false, true, false, false, false, false];
+      const reversePattern = [false, false, false, false, true, false, true, true, true, false, true];
+
+      const hasPattern = (line, start, candidate) => {
+        for (let offset = 0; offset < candidate.length; offset += 1) {
+          if (line[start + offset] !== candidate[offset]) {
+            return false;
+          }
+        }
+        return true;
+      };
+
+      for (let row = 0; row < QR_SIZE; row += 1) {
+        for (let col = 0; col <= QR_SIZE - 11; col += 1) {
+          if (hasPattern(matrix[row], col, pattern) || hasPattern(matrix[row], col, reversePattern)) {
+            penalty += 40;
+          }
+        }
+      }
+
+      for (let col = 0; col < QR_SIZE; col += 1) {
+        const column = matrix.map((row) => row[col]);
+        for (let row = 0; row <= QR_SIZE - 11; row += 1) {
+          if (hasPattern(column, row, pattern) || hasPattern(column, row, reversePattern)) {
+            penalty += 40;
+          }
+        }
+      }
+
+      let darkModules = 0;
+      for (let row = 0; row < QR_SIZE; row += 1) {
+        for (let col = 0; col < QR_SIZE; col += 1) {
+          if (matrix[row][col]) {
+            darkModules += 1;
+          }
+        }
+      }
+
+      const percent = (darkModules * 100) / (QR_SIZE * QR_SIZE);
+      penalty += Math.floor(Math.abs(percent - 50) / 5) * 10;
+
+      return penalty;
+    }
+
+    function buildQrMatrix(payload) {
+      const codewords = createDataCodewords(payload);
+      let bestMatrix = null;
+      let bestPenalty = Infinity;
+
+      for (let maskIndex = 0; maskIndex < 8; maskIndex += 1) {
+        const matrix = createEmptyMatrix();
+        const reserved = createReservedMatrix();
+
+        drawFinderPattern(matrix, reserved, 0, 0);
+        drawFinderPattern(matrix, reserved, 0, QR_SIZE - 7);
+        drawFinderPattern(matrix, reserved, QR_SIZE - 7, 0);
+        drawTimingPatterns(matrix, reserved);
+        drawAlignmentPattern(matrix, reserved, 34, 34);
+        drawDarkModule(matrix, reserved);
+        reserveFormatInformationAreas(matrix, reserved);
+        placeData(matrix, reserved, codewords, maskIndex);
+        placeFormatInformation(matrix, maskIndex);
+
+        const score = penaltyScore(matrix);
+        if (score < bestPenalty) {
+          bestPenalty = score;
+          bestMatrix = matrix;
+        }
+      }
+
+      return bestMatrix;
+    }
+
+    function matrixToSvg(matrix) {
+      const scale = 7;
+      const margin = scale * 4;
+      const size = matrix.length * scale + margin * 2;
+      const parts = [
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" shape-rendering="crispEdges">`,
+        `<rect width="100%" height="100%" fill="#ffffff"/>`
+      ];
+
+      for (let row = 0; row < matrix.length; row += 1) {
+        for (let col = 0; col < matrix.length; col += 1) {
+          if (matrix[row][col]) {
+            parts.push(`<rect x="${margin + (col * scale)}" y="${margin + (row * scale)}" width="${scale}" height="${scale}" fill="#000000"/>`);
+          }
+        }
+      }
+
+      parts.push('</svg>');
+      return parts.join('');
+    }
+
+    function svgDataUri(svg) {
+      return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
     }
 
     function updateQrCode() {
       const payload = buildQrPayload();
-      const url = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=10&data=${encodeURIComponent(payload)}`;
-      qrImage.src = url;
+      const matrix = buildQrMatrix(payload);
+      qrImage.src = svgDataUri(matrixToSvg(matrix));
       qrText.textContent = payload;
     }
 
