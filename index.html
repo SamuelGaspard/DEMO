@@ -387,6 +387,125 @@
       align-items: start;
     }
 
+    .payment {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .payment-panel {
+      padding: 22px;
+      border: 1px solid #c5d5dc;
+      border-radius: 20px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbfc 100%);
+    }
+
+    .payment-panel h3 {
+      margin: 0 0 14px;
+      font-size: 19px;
+      color: var(--accent);
+      letter-spacing: 0.035em;
+      text-transform: uppercase;
+      position: relative;
+      padding-bottom: 8px;
+    }
+
+    .payment-panel h3::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 54px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--gold));
+      border-radius: 99px;
+    }
+
+    .payment-links {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .payment-link {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .payment-link span {
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      font-size: 11px;
+      color: #5e6d79;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+    }
+
+    .payment-link code {
+      display: block;
+      padding: 11px 13px;
+      border: 1px solid #c7d3d9;
+      border-radius: 13px;
+      background: #fbfefe;
+      color: var(--ink);
+      overflow-wrap: anywhere;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      min-height: 48px;
+    }
+
+    .payment-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .payment-help {
+      margin-top: 14px;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .payment-status {
+      margin-top: 12px;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      font-size: 13px;
+      color: #0f766e;
+      min-height: 18px;
+    }
+
+    .payment-qr {
+      margin-top: 16px;
+      border: 2px dashed #aac0c9;
+      border-radius: 20px;
+      min-height: 150px;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at top left, rgba(196, 69, 54, 0.10), transparent 45%),
+        #f2f8fa;
+      color: var(--muted);
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .payment-qr img {
+      width: 220px;
+      height: 220px;
+      image-rendering: pixelated;
+      border: 10px solid white;
+      border-radius: 14px;
+      background: white;
+      display: block;
+      box-shadow: 0 12px 24px rgba(9, 30, 66, 0.16);
+    }
+
     .note-box {
       padding: 20px;
       border-radius: 20px;
@@ -431,33 +550,6 @@
     .summary-row .amount {
       font-variant-numeric: tabular-nums;
       font-weight: 800;
-    }
-
-    .qr {
-      margin-top: 16px;
-      border: 2px dashed #aac0c9;
-      border-radius: 20px;
-      min-height: 150px;
-      display: grid;
-      place-items: center;
-      background:
-        radial-gradient(circle at top left, rgba(0, 109, 119, 0.10), transparent 45%),
-        #f2f8fa;
-      color: var(--muted);
-      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-      text-align: center;
-      padding: 20px;
-    }
-
-    .qr img {
-      width: 220px;
-      height: 220px;
-      image-rendering: pixelated;
-      border: 10px solid white;
-      border-radius: 14px;
-      background: white;
-      display: block;
-      box-shadow: 0 12px 24px rgba(9, 30, 66, 0.16);
     }
 
     .footer {
@@ -578,6 +670,7 @@
       .brand,
       .table-wrap,
       .summary,
+      .payment-panel,
       .note-box {
         box-shadow: none;
       }
@@ -645,7 +738,7 @@
 
           <div class="block">
             <h3>Mention légale</h3>
-            <div class="qr">
+            <div class="payment-qr">
               <img id="qrImage" alt="Code QR de la facture" />
             </div>
           </div>
@@ -687,6 +780,42 @@
           <div>Document préparé pour l’impression A4.</div>
           <div>Remplis les champs, ajoute les lignes, puis clique sur Imprimer.</div>
         </div>
+
+        <div class="payment">
+          <div class="payment-panel">
+            <h3>Paiement en ligne</h3>
+            <div class="payment-links">
+              <div class="payment-link">
+                <span>Plateforme</span>
+                <input id="paymentProvider" value="Stripe / PayPal / lien custom" />
+              </div>
+              <div class="payment-link">
+                <span>Référence facture</span>
+                <code id="paymentReference">FAC-2026-0001</code>
+              </div>
+              <div class="payment-link" style="grid-column: 1 / -1;">
+                <span>Lien de paiement</span>
+                <code id="paymentLink">https://example.com/pay</code>
+              </div>
+            </div>
+            <div class="payment-actions hidden-print">
+              <button class="btn-primary" id="copyPaymentLinkBtn" type="button">Copier le lien</button>
+              <button class="btn-secondary" id="openPaymentLinkBtn" type="button">Ouvrir le lien</button>
+              <button class="btn-secondary" id="refreshPaymentBtn" type="button">Mettre à jour</button>
+            </div>
+            <div class="payment-help">
+              Ce bloc génère un lien de paiement à partir du total TTC. Pour un vrai encaissement en ligne, il faut brancher un prestataire comme Stripe, PayPal ou un agrégateur Mobile Money avec un backend sécurisé.
+            </div>
+            <div class="payment-status" id="paymentStatus"></div>
+          </div>
+
+          <div class="payment-panel">
+            <h3>QR de paiement</h3>
+            <div class="payment-qr">
+              <img id="paymentQrImage" alt="Code QR de paiement" />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -715,9 +844,17 @@
     const printBtn = document.getElementById('printBtn');
     const invoiceDate = document.getElementById('invoiceDate');
     const qrImage = document.getElementById('qrImage');
+    const paymentQrImage = document.getElementById('paymentQrImage');
     const invoiceNumber = document.getElementById('invoiceNumber');
     const issuerTax = document.getElementById('issuerTax');
     const clientName = document.getElementById('clientName');
+    const paymentProvider = document.getElementById('paymentProvider');
+    const paymentReference = document.getElementById('paymentReference');
+    const paymentLink = document.getElementById('paymentLink');
+    const copyPaymentLinkBtn = document.getElementById('copyPaymentLinkBtn');
+    const openPaymentLinkBtn = document.getElementById('openPaymentLinkBtn');
+    const refreshPaymentBtn = document.getElementById('refreshPaymentBtn');
+    const paymentStatus = document.getElementById('paymentStatus');
 
     const currencyFormat = new Intl.NumberFormat('fr-FR', {
       minimumFractionDigits: 2,
@@ -842,6 +979,33 @@
       }
 
       return payload;
+    }
+
+    function buildPaymentLink() {
+      const subtotal = Array.from(itemsBody.querySelectorAll('tr')).reduce((sum, tr) => {
+        const qty = parseFloat(tr.querySelector('.item-qty').value) || 0;
+        const price = parseFloat(tr.querySelector('.item-price').value) || 0;
+        return sum + (qty * price);
+      }, 0);
+      const total = subtotal * 1.16;
+      const reference = (invoiceNumber.value || '').trim() || 'FACTURE';
+      const provider = (paymentProvider.value || '').trim();
+      const amount = total.toFixed(2);
+
+      if (/^https?:\/\//i.test(provider)) {
+        const separator = provider.includes('?') ? '&' : '?';
+        return `${provider}${separator}ref=${encodeURIComponent(reference)}&amount=${encodeURIComponent(amount)}&currency=CDF`;
+      }
+
+      if (/paypal/i.test(provider)) {
+        return `https://www.paypal.com/paypalme/${encodeURIComponent(reference)}/${encodeURIComponent(amount)}`;
+      }
+
+      if (/stripe/i.test(provider)) {
+        return `https://buy.stripe.com/test_${encodeURIComponent(reference.toLowerCase().replace(/[^a-z0-9]+/g, ''))}`;
+      }
+
+      return `https://example.com/pay?ref=${encodeURIComponent(reference)}&amount=${encodeURIComponent(amount)}&currency=CDF&provider=${encodeURIComponent(provider || 'custom')}`;
     }
 
     function formatCurrency(value) {
@@ -1246,6 +1410,13 @@
       qrImage.src = svgDataUri(matrixToSvg(matrix));
     }
 
+    function updatePaymentSection() {
+      const link = buildPaymentLink();
+      paymentReference.textContent = invoiceNumber.value || '';
+      paymentLink.textContent = link;
+      paymentQrImage.src = svgDataUri(matrixToSvg(buildQrMatrix(`PAY|${link}`)));
+    }
+
     function createRow(name = '', qty = 1, price = 0) {
       const row = itemTemplate.content.cloneNode(true);
       const tr = row.querySelector('tr');
@@ -1304,6 +1475,7 @@
       vatEl.textContent = formatCurrency(vat);
       grandTotalEl.textContent = formatCurrency(grandTotal);
       updateQrCode();
+      updatePaymentSection();
     }
 
     addRowBtn.addEventListener('click', () => {
@@ -1319,6 +1491,29 @@
       input.addEventListener('input', updateQrCode);
     });
 
+    [invoiceNumber, paymentProvider].forEach((input) => {
+      input.addEventListener('input', updatePaymentSection);
+    });
+
+    copyPaymentLinkBtn.addEventListener('click', async () => {
+      const link = paymentLink.textContent;
+      try {
+        await navigator.clipboard.writeText(link);
+        paymentStatus.textContent = 'Lien de paiement copié.';
+      } catch {
+        paymentStatus.textContent = 'Impossible de copier automatiquement le lien.';
+      }
+    });
+
+    openPaymentLinkBtn.addEventListener('click', () => {
+      window.open(paymentLink.textContent, '_blank', 'noopener');
+    });
+
+    refreshPaymentBtn.addEventListener('click', () => {
+      updatePaymentSection();
+      paymentStatus.textContent = 'Bloc de paiement mis à jour.';
+    });
+
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -1329,6 +1524,7 @@
     createRow('Frais de service', 2, 0);
     updateTotals();
     updateQrCode();
+    updatePaymentSection();
   </script>
 </body>
 </html>
