@@ -10,12 +10,22 @@
 <body>
   <section class="home-screen" id="homeScreen" aria-label="Page d'accueil">
     <div class="home-overlay"></div>
+    <div class="home-floating" aria-hidden="true">
+      <span class="home-orb orb-a"></span>
+      <span class="home-orb orb-b"></span>
+      <span class="home-orb orb-c"></span>
+    </div>
     <div class="home-content">
       <p class="home-kicker">Facturation RDC</p>
       <h1>Bienvenue sur votre espace de facture numerique</h1>
       <p>
         Cree rapidement une facture claire, conforme et prete a imprimer. Commence par l'accueil puis accede au generateur interactif.
       </p>
+      <div class="home-pills" aria-label="Points forts">
+        <span>TVA 16 % automatique</span>
+        <span>Impression A4 propre</span>
+        <span>Paiement mobile et banque</span>
+      </div>
       <div class="home-actions">
         <button class="btn-primary" id="startInvoiceBtn" type="button">Commencer une facture</button>
         <button class="btn-secondary" id="previewInvoiceBtn" type="button">Voir un apercu du generateur</button>

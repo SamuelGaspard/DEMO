@@ -31,6 +31,7 @@ const bankAccount = document.getElementById('bankAccount');
 const bankSwift = document.getElementById('bankSwift');
 const copyPaymentInfoBtn = document.getElementById('copyPaymentInfoBtn');
 const refreshPaymentBtn = document.getElementById('refreshPaymentBtn');
+const homeContent = document.querySelector('.home-content');
 
 const currencyFormat = new Intl.NumberFormat('fr-FR', {
   minimumFractionDigits: 2,
@@ -47,6 +48,39 @@ function showHomeScreen() {
   invoiceApp.classList.add('is-hidden');
   homeScreen.classList.remove('is-hidden');
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function setupHomeEffects() {
+  if (!homeContent) {
+    return;
+  }
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduceMotion) {
+    return;
+  }
+
+  homeContent.addEventListener('mousemove', (event) => {
+    const rect = homeContent.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const midX = rect.width / 2;
+    const midY = rect.height / 2;
+    const tiltX = ((midY - y) / midY) * 2.4;
+    const tiltY = ((x - midX) / midX) * 2.4;
+
+    homeContent.style.setProperty('--tilt-x', `${tiltX.toFixed(2)}deg`);
+    homeContent.style.setProperty('--tilt-y', `${tiltY.toFixed(2)}deg`);
+    homeContent.style.setProperty('--glow-x', `${(x / rect.width) * 100}%`);
+    homeContent.style.setProperty('--glow-y', `${(y / rect.height) * 100}%`);
+  });
+
+  homeContent.addEventListener('mouseleave', () => {
+    homeContent.style.setProperty('--tilt-x', '0deg');
+    homeContent.style.setProperty('--tilt-y', '0deg');
+    homeContent.style.setProperty('--glow-x', '50%');
+    homeContent.style.setProperty('--glow-y', '20%');
+  });
 }
 
 function formatCurrency(value) {
@@ -306,6 +340,7 @@ invoiceDate.value = `${year}-${month}-${day}`;
 createRow('Prestation initiale', 1, 0);
 createRow('Frais de service', 2, 0);
 updateTotals();
+setupHomeEffects();
 
 if (window.location.hash === '#facture') {
   showInvoiceApp();

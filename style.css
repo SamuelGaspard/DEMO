@@ -49,6 +49,7 @@ html, body {
     radial-gradient(circle at 86% 16%, rgba(196, 69, 54, 0.2), transparent 30%),
     radial-gradient(circle at 52% 90%, rgba(185, 131, 47, 0.2), transparent 42%),
     linear-gradient(140deg, #eaf3f2 0%, #e2ecee 100%);
+  isolation: isolate;
 }
 
 .home-overlay {
@@ -57,6 +58,48 @@ html, body {
   pointer-events: none;
   background:
     repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0 14px, rgba(255, 255, 255, 0.04) 14px 28px);
+  opacity: 0.7;
+}
+
+.home-floating {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.home-orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(1px);
+  opacity: 0.78;
+}
+
+.orb-a {
+  width: 260px;
+  height: 260px;
+  left: 10%;
+  top: 16%;
+  background: radial-gradient(circle at 30% 30%, rgba(0, 109, 119, 0.48), rgba(0, 109, 119, 0.06));
+  animation: driftA 13s ease-in-out infinite;
+}
+
+.orb-b {
+  width: 190px;
+  height: 190px;
+  right: 14%;
+  top: 18%;
+  background: radial-gradient(circle at 30% 30%, rgba(196, 69, 54, 0.44), rgba(196, 69, 54, 0.05));
+  animation: driftB 10s ease-in-out infinite;
+}
+
+.orb-c {
+  width: 220px;
+  height: 220px;
+  right: 22%;
+  bottom: 10%;
+  background: radial-gradient(circle at 30% 30%, rgba(185, 131, 47, 0.38), rgba(185, 131, 47, 0.05));
+  animation: driftC 15s ease-in-out infinite;
 }
 
 .home-content {
@@ -67,7 +110,20 @@ html, body {
   border-radius: 26px;
   padding: 34px 30px;
   background: linear-gradient(130deg, rgba(255, 255, 255, 0.9), rgba(250, 253, 253, 0.82));
-  box-shadow: 0 30px 66px rgba(9, 30, 66, 0.14);
+  box-shadow: 0 34px 72px rgba(9, 30, 66, 0.16);
+  transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transition: transform 0.22s ease, box-shadow 0.25s ease;
+  animation: revealCard 0.8s ease both;
+}
+
+.home-content::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 26px;
+  background: radial-gradient(circle at var(--glow-x, 50%) var(--glow-y, 20%), rgba(255, 255, 255, 0.7), transparent 42%);
+  opacity: 0.64;
+  pointer-events: none;
 }
 
 .home-kicker {
@@ -78,6 +134,7 @@ html, body {
   font-size: 11px;
   color: #516171;
   font-weight: 700;
+  animation: slideUp 0.5s ease both;
 }
 
 .home-content h1 {
@@ -86,6 +143,7 @@ html, body {
   line-height: 0.98;
   letter-spacing: 0.02em;
   color: #122d43;
+  animation: slideUp 0.65s ease both;
 }
 
 .home-content p {
@@ -94,6 +152,7 @@ html, body {
   line-height: 1.7;
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
   font-size: 20px;
+  animation: slideUp 0.78s ease both;
 }
 
 .home-hint {
@@ -109,11 +168,102 @@ html, body {
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
+  animation: slideUp 0.95s ease both;
 }
 
 .home-actions button {
   font-size: 17px;
   padding: 14px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.home-actions button::after {
+  content: "";
+  position: absolute;
+  left: -40%;
+  top: 0;
+  width: 28%;
+  height: 100%;
+  transform: skewX(-20deg);
+  background: rgba(255, 255, 255, 0.4);
+  transition: left 0.35s ease;
+}
+
+.home-actions button:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 16px 26px rgba(10, 28, 44, 0.18);
+}
+
+.home-actions button:hover::after {
+  left: 115%;
+}
+
+.home-actions button:active {
+  transform: translateY(-1px) scale(0.99);
+}
+
+.home-pills {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  animation: slideUp 0.88s ease both;
+}
+
+.home-pills span {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid #bfd2d9;
+  background: rgba(255, 255, 255, 0.82);
+  color: #23455a;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.home-pills span:hover {
+  transform: translateY(-2px);
+  border-color: #94b3bf;
+  box-shadow: 0 10px 20px rgba(9, 30, 66, 0.1);
+}
+
+@keyframes revealCard {
+  from {
+    opacity: 0;
+    transform: perspective(900px) rotateX(6deg) rotateY(-4deg) translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes driftA {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(18px, -16px); }
+}
+
+@keyframes driftB {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-22px, 12px); }
+}
+
+@keyframes driftC {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-16px, -14px); }
 }
 
 .toolbar {
@@ -680,6 +830,18 @@ td input {
     font-size: 42px;
   }
 
+  .home-content p {
+    font-size: 18px;
+  }
+
+  .home-actions button {
+    width: 100%;
+  }
+
+  .home-orb {
+    opacity: 0.45;
+  }
+
   .header-grid,
   .meta-grid,
   .totals,
@@ -715,6 +877,25 @@ td input {
   .invoice::before {
     font-size: 54px;
     top: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-content,
+  .home-kicker,
+  .home-content h1,
+  .home-content p,
+  .home-actions,
+  .home-pills,
+  .home-orb,
+  .home-actions button,
+  .home-pills span {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .home-content {
+    transform: none !important;
   }
 }
 
