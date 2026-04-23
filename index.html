@@ -20,6 +20,30 @@
       </div>
     </div>
 
+    <section class="welcome hidden-print" aria-label="Accueil">
+      <div class="welcome-content">
+        <p class="welcome-tag">Accueil</p>
+        <h2>Prépare ta facture en moins de 2 minutes</h2>
+        <p class="welcome-text">
+          Remplis les informations de l'émetteur, ajoute tes articles, puis génère un document propre avec total TTC et instructions de paiement.
+        </p>
+      </div>
+      <div class="welcome-links">
+        <a href="#invoice-info" class="welcome-link">
+          <span class="welcome-link-title">Infos facture</span>
+          <span class="welcome-link-desc">Numéro, date, émetteur et client</span>
+        </a>
+        <a href="#invoice-items" class="welcome-link">
+          <span class="welcome-link-title">Articles</span>
+          <span class="welcome-link-desc">Quantité, prix et total HT</span>
+        </a>
+        <a href="#invoice-payment" class="welcome-link">
+          <span class="welcome-link-title">Paiement</span>
+          <span class="welcome-link-desc">Mobile Money ou Banque</span>
+        </a>
+      </div>
+    </section>
+
     <div class="sheet">
       <div class="invoice" id="invoice">
         <div class="invoice-title">
@@ -35,7 +59,7 @@
           </div>
         </div>
 
-        <div class="header-grid">
+        <div class="header-grid" id="invoice-info">
           <div class="brand block">
             <h3>Émetteur</h3>
             <div class="grid">
@@ -74,7 +98,7 @@
           </div>
         </div>
 
-        <div class="block">
+        <div class="block" id="invoice-items">
           <h3>Articles</h3>
           <div class="table-wrap">
             <table>
@@ -111,7 +135,7 @@
           <div>Remplis les champs, ajoute les lignes, puis clique sur Imprimer.</div>
         </div>
 
-        <div class="payment">
+        <div class="payment" id="invoice-payment">
           <div class="payment-panel">
             <h3>Paiement en ligne</h3>
             <div class="payment-links">

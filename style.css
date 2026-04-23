@@ -68,6 +68,82 @@ html, body {
   flex-wrap: wrap;
 }
 
+.welcome {
+  margin-bottom: 22px;
+  border: 1px solid rgba(163, 181, 189, 0.68);
+  border-radius: 22px;
+  padding: 20px;
+  background:
+    radial-gradient(circle at 92% 12%, rgba(0, 109, 119, 0.16), transparent 33%),
+    radial-gradient(circle at 12% 82%, rgba(185, 131, 47, 0.16), transparent 35%),
+    linear-gradient(130deg, rgba(255, 255, 255, 0.88), rgba(247, 251, 251, 0.76));
+  box-shadow: 0 16px 34px rgba(12, 28, 45, 0.12);
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 18px;
+}
+
+.welcome-tag {
+  margin: 0;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: #506579;
+  font-weight: 700;
+}
+
+.welcome h2 {
+  margin: 8px 0 10px;
+  font-size: 33px;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+}
+
+.welcome-text {
+  margin: 0;
+  color: #4d5d6d;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  line-height: 1.6;
+}
+
+.welcome-links {
+  display: grid;
+  gap: 10px;
+}
+
+.welcome-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 14px;
+  padding: 12px 14px;
+  border: 1px solid #c8d6dc;
+  background: rgba(255, 255, 255, 0.9);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.welcome-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 22px rgba(9, 30, 66, 0.11);
+  border-color: #9fb8c1;
+}
+
+.welcome-link-title {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: #11324b;
+}
+
+.welcome-link-desc {
+  display: block;
+  font-size: 13px;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  color: #5a667a;
+}
+
 button {
   border: 0;
   border-radius: 14px;
@@ -534,6 +610,15 @@ td input {
 
   .toolbar {
     padding: 12px;
+  }
+
+  .welcome {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .welcome h2 {
+    font-size: 28px;
   }
 
   .invoice::before {
