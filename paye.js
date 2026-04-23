@@ -32,6 +32,10 @@ const bankSwift = document.getElementById('bankSwift');
 const copyPaymentInfoBtn = document.getElementById('copyPaymentInfoBtn');
 const refreshPaymentBtn = document.getElementById('refreshPaymentBtn');
 const homeContent = document.querySelector('.home-content');
+const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+const PAGE_TRANSITION_MS = 720;
+let isSwitchingPage = false;
 
 const currencyFormat = new Intl.NumberFormat('fr-FR', {
   minimumFractionDigits: 2,
@@ -39,15 +43,79 @@ const currencyFormat = new Intl.NumberFormat('fr-FR', {
 });
 
 function showInvoiceApp() {
-  homeScreen.classList.add('is-hidden');
+  if (isSwitchingPage || !invoiceApp.classList.contains('is-hidden')) {
+    return;
+  }
+
+  if (reduceMotionQuery.matches) {
+    homeScreen.classList.add('is-hidden');
+    invoiceApp.classList.remove('is-hidden');
+    triggerInvoiceEntrance();
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    return;
+  }
+
+  isSwitchingPage = true;
   invoiceApp.classList.remove('is-hidden');
+  invoiceApp.classList.add('page-enter');
+  homeScreen.classList.add('page-exit');
+
+  requestAnimationFrame(() => {
+    invoiceApp.classList.add('page-enter-active');
+    homeScreen.classList.add('page-exit-active');
+  });
+
+  window.setTimeout(() => {
+    homeScreen.classList.add('is-hidden');
+    homeScreen.classList.remove('page-exit', 'page-exit-active');
+    invoiceApp.classList.remove('page-enter', 'page-enter-active');
+    triggerInvoiceEntrance();
+    isSwitchingPage = false;
+  }, PAGE_TRANSITION_MS);
+
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function showHomeScreen() {
-  invoiceApp.classList.add('is-hidden');
+  if (isSwitchingPage || !homeScreen.classList.contains('is-hidden')) {
+    return;
+  }
+
+  if (reduceMotionQuery.matches) {
+    invoiceApp.classList.add('is-hidden');
+    homeScreen.classList.remove('is-hidden');
+    window.scrollTo({ top: 0, behavior: 'auto' });
+    return;
+  }
+
+  isSwitchingPage = true;
   homeScreen.classList.remove('is-hidden');
+  homeScreen.classList.add('page-enter');
+  invoiceApp.classList.add('page-exit');
+
+  requestAnimationFrame(() => {
+    homeScreen.classList.add('page-enter-active');
+    invoiceApp.classList.add('page-exit-active');
+  });
+
+  window.setTimeout(() => {
+    invoiceApp.classList.add('is-hidden');
+    homeScreen.classList.remove('page-enter', 'page-enter-active');
+    invoiceApp.classList.remove('page-exit', 'page-exit-active');
+    isSwitchingPage = false;
+  }, PAGE_TRANSITION_MS);
+
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function triggerInvoiceEntrance() {
+  if (reduceMotionQuery.matches) {
+    return;
+  }
+
+  invoiceApp.classList.remove('invoice-live');
+  void invoiceApp.offsetWidth;
+  invoiceApp.classList.add('invoice-live');
 }
 
 function setupHomeEffects() {
@@ -343,5 +411,7 @@ updateTotals();
 setupHomeEffects();
 
 if (window.location.hash === '#facture') {
-  showInvoiceApp();
+  homeScreen.classList.add('is-hidden');
+  invoiceApp.classList.remove('is-hidden');
+  triggerInvoiceEntrance();
 }
