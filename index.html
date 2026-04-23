@@ -344,18 +344,14 @@
       padding: 18px;
     }
 
-    .qr .box {
+    .qr img {
       width: 96px;
       height: 96px;
-      border: 10px solid #202020;
-      position: relative;
-      background:
-        linear-gradient(90deg, transparent 40%, #202020 40%, #202020 52%, transparent 52%),
-        linear-gradient(transparent 40%, #202020 40%, #202020 52%, transparent 52%);
-      background-size: 18px 18px;
-      border-radius: 6px;
+      image-rendering: pixelated;
+      border: 8px solid white;
+      border-radius: 10px;
+      background: white;
       margin-bottom: 10px;
-      opacity: 0.85;
     }
 
     .footer {
@@ -492,8 +488,8 @@
             <h3>Mention légale</h3>
             <div class="qr">
               <div>
-                <div class="box" aria-hidden="true"></div>
-                Zone QR / numéro de série machine fiscale DGI
+                <img id="qrImage" alt="Code QR de la facture" />
+                <div id="qrText">Zone QR / numéro de série machine fiscale DGI</div>
               </div>
             </div>
           </div>
@@ -562,6 +558,11 @@
     const addRowBtn = document.getElementById('addRowBtn');
     const printBtn = document.getElementById('printBtn');
     const invoiceDate = document.getElementById('invoiceDate');
+    const qrImage = document.getElementById('qrImage');
+    const qrText = document.getElementById('qrText');
+    const invoiceNumber = document.getElementById('invoiceNumber');
+    const issuerTax = document.getElementById('issuerTax');
+    const clientName = document.getElementById('clientName');
 
     const currencyFormat = new Intl.NumberFormat('fr-FR', {
       minimumFractionDigits: 2,
@@ -570,6 +571,34 @@
 
     function formatCurrency(value) {
       return `${currencyFormat.format(value)} FC`;
+    }
+
+    function buildQrPayload() {
+      const subtotal = Array.from(itemsBody.querySelectorAll('tr')).reduce((sum, tr) => {
+        const qty = parseFloat(tr.querySelector('.item-qty').value) || 0;
+        const price = parseFloat(tr.querySelector('.item-price').value) || 0;
+        return sum + (qty * price);
+      }, 0);
+      const vat = subtotal * 0.16;
+      const total = subtotal + vat;
+
+      return [
+        'RDC-INVOICE',
+        `NO=${invoiceNumber.value || ''}`,
+        `DATE=${invoiceDate.value || ''}`,
+        `NI=${issuerTax.value || ''}`,
+        `CLIENT=${clientName.value || ''}`,
+        `HT=${subtotal.toFixed(2)}`,
+        `TVA=${vat.toFixed(2)}`,
+        `TTC=${total.toFixed(2)}`
+      ].join('|');
+    }
+
+    function updateQrCode() {
+      const payload = buildQrPayload();
+      const url = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=10&data=${encodeURIComponent(payload)}`;
+      qrImage.src = url;
+      qrText.textContent = payload;
     }
 
     function createRow(name = '', qty = 1, price = 0) {
@@ -629,6 +658,7 @@
       subtotalEl.textContent = formatCurrency(subtotal);
       vatEl.textContent = formatCurrency(vat);
       grandTotalEl.textContent = formatCurrency(grandTotal);
+      updateQrCode();
     }
 
     addRowBtn.addEventListener('click', () => {
@@ -640,6 +670,10 @@
       window.print();
     });
 
+    [invoiceNumber, invoiceDate, issuerTax, clientName].forEach((input) => {
+      input.addEventListener('input', updateQrCode);
+    });
+
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -649,6 +683,7 @@
     createRow('Prestation initiale', 1, 0);
     createRow('Frais de service', 2, 0);
     updateTotals();
+    updateQrCode();
   </script>
 </body>
 </html>
