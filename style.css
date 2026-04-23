@@ -350,6 +350,58 @@ body {
   }
 }
 
+@keyframes shimmerGlow {
+  0% {
+    box-shadow: 0 0 0px rgba(0, 109, 119, 0), inset 0 0 20px rgba(0, 109, 119, 0.05);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(0, 109, 119, 0.15), inset 0 0 30px rgba(0, 109, 119, 0.1);
+  }
+  100% {
+    box-shadow: 0 0 0px rgba(0, 109, 119, 0), inset 0 0 20px rgba(0, 109, 119, 0.05);
+  }
+}
+
+@keyframes floatUp {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(0, 109, 119, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(0, 109, 119, 0);
+  }
+}
+
 .invoice-live .toolbar {
   animation: slideUp 0.42s ease both;
 }
@@ -369,10 +421,41 @@ body {
   animation: popInCard 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.invoice-live .invoice-title {
+  animation: slideInLeft 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.invoice-live label,
+.invoice-live .payment-link span {
+  animation: slideInLeft 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.invoice-live input:focus,
+.invoice-live textarea:focus,
+.invoice-live select:focus {
+  animation: pulseGlow 0.6s ease-out;
+}
+
+.invoice-live .payment-qr img {
+  animation: floatUp 3s ease-in-out infinite;
+}
+
+.invoice-live .badge {
+  animation: slideInRight 0.44s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
 .invoice-live .header-grid .block:nth-child(2) { animation-delay: 0.08s; }
 .invoice-live .meta-grid .block:nth-child(2) { animation-delay: 0.12s; }
 .invoice-live .totals > div:nth-child(2) { animation-delay: 0.16s; }
 .invoice-live .payment .payment-panel:nth-child(2) { animation-delay: 0.22s; }
+
+.invoice-live label:nth-of-type(n) {
+  animation-delay: calc(var(--item-index, 0) * 0.04s);
+}
+
+.table-row {
+  animation: slideInLeft 0.36s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
 
 .toolbar {
   display: flex;
@@ -381,26 +464,40 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  background: linear-gradient(120deg, rgba(255, 255, 255, 0.84), rgba(255, 255, 255, 0.62));
-  border: 1px solid rgba(163, 181, 189, 0.7);
+  background:
+    radial-gradient(circle at top right, rgba(0, 109, 119, 0.08), transparent 30%),
+    linear-gradient(120deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.7));
+  border: 1px solid rgba(163, 181, 189, 0.92);
   border-radius: 18px;
-  padding: 14px 16px;
+  padding: 16px 18px;
   backdrop-filter: blur(3px);
+  box-shadow: 0 18px 32px rgba(9, 30, 66, 0.12);
+  transition: transform 0.28s ease, box-shadow 0.28s ease;
+}
+
+.toolbar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 36px rgba(9, 30, 66, 0.16);
 }
 
 .toolbar h1 {
   margin: 0;
-  font-size: 30px;
+  font-size: 32px;
   letter-spacing: 0.03em;
   line-height: 1.1;
   text-transform: uppercase;
+  background: linear-gradient(135deg, #006d77 0%, #16808b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .toolbar p {
   margin: 6px 0 0;
   color: var(--muted);
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-  font-size: 14px;
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .actions {
@@ -493,17 +590,41 @@ button {
   font-weight: 600;
   letter-spacing: 0.01em;
   cursor: pointer;
-  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.24s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.15s ease, filter 0.2s ease;
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.24s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.15s ease, filter 0.2s ease, background 0.2s ease;
   box-shadow: 0 10px 20px rgba(12, 28, 45, 0.14);
+  position: relative;
+  overflow: hidden;
+}
+
+button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.5s ease, height 0.5s ease;
+  pointer-events: none;
+}
+
+button:hover::before {
+  width: 300px;
+  height: 300px;
+  opacity: 0;
 }
 
 button:hover {
-  transform: translateY(-4px) scale(1.01);
-  filter: saturate(1.03);
+  transform: translateY(-4px) scale(1.02);
+  filter: saturate(1.08) brightness(1.05);
+  box-shadow: 0 14px 28px rgba(12, 28, 45, 0.2);
 }
 
 button:active {
-  transform: translateY(-1px) scale(0.99);
+  transform: translateY(-1px) scale(0.98);
+  box-shadow: 0 4px 12px rgba(12, 28, 45, 0.12);
 }
 
 .btn-primary {
@@ -527,16 +648,17 @@ button:active {
 .sheet {
   background: var(--panel);
   border: 1px solid rgba(181, 197, 203, 0.9);
-  box-shadow: var(--shadow);
+  box-shadow: 0 28px 60px rgba(9, 30, 66, 0.14), 0 0 1px rgba(0, 109, 119, 0.08);
   border-radius: 28px;
   overflow: hidden;
   position: relative;
-  transition: transform 0.35s ease, box-shadow 0.35s ease;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.35s ease;
 }
 
 .sheet:hover {
   transform: translateY(-4px);
-  box-shadow: 0 28px 60px rgba(9, 30, 66, 0.18);
+  box-shadow: 0 36px 72px rgba(9, 30, 66, 0.18), 0 0 2px rgba(0, 109, 119, 0.12);
+  border-color: rgba(181, 197, 203, 1);
 }
 
 .sheet::before {
@@ -587,6 +709,117 @@ button:active {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
   align-items: start;
+  margin-bottom: 28px;
+}
+
+.payment-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.payment-panel h3 {
+  margin-bottom: 18px;
+}
+
+.payment-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  flex: 1;
+}
+
+.payment-link {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.payment-link span {
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: #5e6d79;
+}
+
+.payment-link.full-span {
+  grid-column: 1 / -1;
+}
+
+.payment-link code {
+  background: linear-gradient(180deg, #f7fbfb 0%, #eef5f6 100%);
+  border: 1px solid #c7d5db;
+  padding: 12px 14px;
+  border-radius: 11px;
+  color: #0d4a57;
+  font-weight: 600;
+  overflow-wrap: break-word;
+}
+
+.payment-link input,
+.payment-link select {
+  background: linear-gradient(180deg, #ffffff 0%, #f9fcfc 100%);
+  border: 1px solid #c7d3d9;
+}
+
+.payment-method {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px dashed #dce5e8;
+  transition: max-height 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease, transform 0.4s ease;
+}
+
+.payment-method .payment-links {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  animation: slideInLeft 0.44s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.payment-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  animation: slideInRight 0.44s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.payment-actions button {
+  flex: 1;
+  min-width: 140px;
+  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.24s ease, filter 0.2s ease;
+}
+
+.payment-help {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: rgba(0, 109, 119, 0.05);
+  border-radius: 10px;
+  border-left: 4px solid var(--accent);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  animation: slideInLeft 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+.payment-help:hover {
+  background: rgba(0, 109, 119, 0.08);
+  box-shadow: 0 4px 8px rgba(0, 109, 119, 0.1);
+}
+
+.payment-status {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: rgba(15, 118, 110, 0.08);
+  border-radius: 10px;
+  font-size: 13px;
+  color: #0f766e;
+  font-weight: 600;
+  min-height: 18px;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: pulseGlow 0.3s ease 0.2s;
 }
 
 .header-grid,
@@ -602,6 +835,13 @@ button:active {
   background:
     radial-gradient(circle at top right, rgba(0, 109, 119, 0.08), transparent 40%),
     linear-gradient(180deg, #ffffff 0%, #f8fbfb 100%);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease, border-color 0.28s ease;
+}
+
+.brand:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(9, 30, 66, 0.1);
+  border-color: #a8c0c7;
 }
 
 .brand h2,
@@ -613,6 +853,14 @@ button:active {
   color: var(--accent);
   letter-spacing: 0.035em;
   text-transform: uppercase;
+  transition: color 0.24s ease, text-shadow 0.24s ease;
+}
+
+.block:hover h3,
+.summary:hover h3,
+.payment-panel:hover h3 {
+  color: #16808b;
+  text-shadow: 0 2px 4px rgba(0, 109, 119, 0.15);
 }
 
 .block,
@@ -623,7 +871,7 @@ button:active {
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(2px);
-  transition: transform 0.26s ease, box-shadow 0.26s ease, border-color 0.26s ease;
+  transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.26s ease, border-color 0.26s ease, backdrop-filter 0.26s ease;
 }
 
 .block:hover,
@@ -633,6 +881,7 @@ button:active {
   transform: translateY(-3px);
   box-shadow: 0 12px 24px rgba(9, 30, 66, 0.1);
   border-color: #acc4cc;
+  backdrop-filter: blur(3px);
 }
 
 .block h3,
@@ -736,6 +985,7 @@ label,
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
+  transition: color 0.2s ease, transform 0.2s ease;
 }
 
 input,
@@ -750,7 +1000,15 @@ code {
   font: inherit;
   color: var(--ink);
   outline: none;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  transition: box-shadow 0.22s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.22s ease, transform 0.15s ease, background 0.22s ease;
+}
+
+input:hover,
+textarea:hover,
+select:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(180deg, #ffffff 0%, #f5f9fa 100%);
+  border-color: #a8c0c7;
 }
 
 code {
@@ -769,8 +1027,9 @@ input:focus,
 textarea:focus,
 select:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 4px rgba(0, 109, 119, 0.15);
-  transform: translateY(-1px);
+  box-shadow: 0 0 0 4px rgba(0, 109, 119, 0.15), 0 8px 16px rgba(0, 109, 119, 0.1);
+  transform: translateY(-2px);
+  background: #fff;
 }
 
 .table-wrap {
@@ -799,13 +1058,18 @@ td {
   text-align: left;
 }
 
+tbody tr {
+  transition: background-color 0.22s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.22s ease, transform 0.2s ease;
+}
+
 tbody tr:nth-child(even) {
   background: #f8fcfd;
 }
 
 tbody tr:hover {
-  background: #edf6f8;
-  transition: background-color 0.2s ease;
+  background: #dceef3;
+  box-shadow: inset 0 0 8px rgba(0, 109, 119, 0.08), 0 4px 12px rgba(0, 109, 119, 0.1);
+  transform: translateY(-1px);
 }
 
 th {
@@ -814,15 +1078,24 @@ th {
   text-transform: uppercase;
   letter-spacing: 0.09em;
   color: #34536b;
+  transition: color 0.2s ease, background 0.2s ease;
 }
 
 td input {
   background: #fbfefe;
+  transition: all 0.2s ease;
+}
+
+td input:focus {
+  background: #ffffff;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 109, 119, 0.1);
 }
 
 .row-actions {
   display: flex;
   gap: 8px;
+  animation: slideInRight 0.24s ease;
 }
 
 .small-btn {
@@ -831,6 +1104,18 @@ td input {
   font-size: 13px;
   box-shadow: none;
   white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.small-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 12px rgba(12, 28, 45, 0.15);
+}
+
+.small-btn:active {
+  transform: translateY(0) scale(0.98);
 }
 
 .payment-method {
@@ -873,7 +1158,7 @@ td input {
   margin-top: 16px;
   border: 2px dashed #aac0c9;
   border-radius: 20px;
-  min-height: 150px;
+  min-height: 250px;
   display: grid;
   place-items: center;
   background:
@@ -883,6 +1168,23 @@ td input {
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
   text-align: center;
   padding: 20px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+}
+
+.payment-qr::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(0, 109, 119, 0.05), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.payment-qr:hover::before {
+  opacity: 1;
 }
 
 .payment-qr img {
@@ -894,6 +1196,15 @@ td input {
   background: white;
   display: block;
   box-shadow: 0 12px 24px rgba(9, 30, 66, 0.16);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), filter 0.28s ease, box-shadow 0.28s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.payment-qr img:hover {
+  transform: scale(1.08) rotateZ(1deg);
+  filter: drop-shadow(0 8px 16px rgba(0, 109, 119, 0.25));
+  box-shadow: 0 20px 40px rgba(9, 30, 66, 0.24);
 }
 
 .note-box {

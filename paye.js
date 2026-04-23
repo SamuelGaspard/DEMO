@@ -116,6 +116,11 @@ function triggerInvoiceEntrance() {
   invoiceApp.classList.remove('invoice-live');
   void invoiceApp.offsetWidth;
   invoiceApp.classList.add('invoice-live');
+  
+  window.setTimeout(() => {
+    updateInvoiceCode();
+    updatePaymentSection();
+  }, 50);
 }
 
 function setupHomeEffects() {
@@ -173,35 +178,35 @@ function escapeSvg(text) {
 }
 
 function renderCodeSvg(title, lines) {
-  const width = 520;
   const lineHeight = 28;
-  const top = 30;
-  const contentHeight = top + (Math.max(lines.length, 1) * lineHeight) + 38;
+  const width = 520;
+  const contentHeight = 60 + (Math.max(lines.length, 1) * lineHeight) + 30;
+  
+  const linesText = lines.map(l => escapeSvg(l)).join('&#10;');
+  const fullText = `${escapeSvg(title)}\n${linesText}`;
+  
   const svg = [
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${contentHeight}" width="${width}" height="${contentHeight}" role="img" aria-label="${title}">`,
-    '<rect width="100%" height="100%" rx="18" fill="#ffffff"/>',
-    `<rect x="12" y="12" width="496" height="${contentHeight - 24}" rx="14" fill="#f7fbfb" stroke="#c7d5db"/>`,
-    '<rect x="12" y="12" width="496" height="12" rx="6" fill="#006d77"/>',
-    `<text x="28" y="54" fill="#006d77" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="26" font-weight="700">${escapeSvg(title)}</text>`
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${contentHeight}" width="${width}" height="${contentHeight}">`,
+    '<defs><style>text { font-family: "Trebuchet MS", "Segoe UI", sans-serif; }</style></defs>',
+    '<rect width="100%" height="100%" fill="#fff"/>',
+    `<rect x="12" y="12" width="${width - 24}" height="${contentHeight - 24}" rx="10" fill="#f7fbfb" stroke="#c7d5db" stroke-width="1"/>`,
+    `<rect x="16" y="16" width="${width - 32}" height="30" fill="#006d77" rx="6"/>`,
+    `<text x="${width / 2}" y="37" text-anchor="middle" font-size="20" font-weight="700" fill="#fff">${escapeSvg(title)}</text>`
   ];
 
   lines.forEach((line, index) => {
-    svg.push(`<text x="28" y="${94 + (index * lineHeight)}" fill="#1a2433" font-family="Trebuchet MS, Segoe UI, sans-serif" font-size="18">${escapeSvg(line)}</text>`);
-  });
-
-  const decorative = [
-    [372, 72], [398, 72], [424, 72], [450, 72],
-    [372, 98], [398, 98], [424, 98], [450, 98],
-    [372, 124], [398, 124], [424, 124], [450, 124]
-  ];
-
-  decorative.forEach(([x, y], index) => {
-    const fill = index % 2 === 0 ? '#006d77' : '#c44536';
-    svg.push(`<rect x="${x}" y="${y}" width="14" height="14" rx="2" fill="${fill}"/>`);
+    const yPos = 70 + (index * lineHeight);
+    svg.push(`<text x="28" y="${yPos}" font-size="16" fill="#1a2433">${escapeSvg(line)}</text>`);
   });
 
   svg.push('</svg>');
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg.join(''))}`;
+  try {
+    const blob = new Blob([svg.join('')], { type: 'image/svg+xml' });
+    return URL.createObjectURL(blob);
+  } catch (e) {
+    const encoded = encodeURIComponent(svg.join(''));
+    return `data:image/svg+xml;utf8,${encoded}`;
+  }
 }
 
 function buildInvoiceLines() {
@@ -328,7 +333,11 @@ function addInitialRow() {
 }
 
 function updateInvoiceCode() {
-  qrImage.src = renderCodeSvg('FACTURE RDC', buildInvoiceLines());
+  if (qrImage) {
+    const lines = buildInvoiceLines();
+    qrImage.src = renderCodeSvg('FACTURE RDC', lines);
+    qrImage.style.display = 'block';
+  }
 }
 
 function updatePaymentSection() {
@@ -336,7 +345,11 @@ function updatePaymentSection() {
   paymentReference.textContent = data.reference;
   paymentAmount.textContent = data.amountText;
   paymentInstruction.textContent = data.instruction;
-  paymentQrImage.src = renderCodeSvg(data.isMobile ? 'MOBILE MONEY' : 'BANQUE', data.instruction.split('\n'));
+  if (paymentQrImage) {
+    const qrTitle = data.isMobile ? 'MOBILE MONEY' : 'BANQUE';
+    paymentQrImage.src = renderCodeSvg(qrTitle, data.instruction.split('\n'));
+    paymentQrImage.style.display = 'block';
+  }
   mobileMoneyPanel.classList.toggle('is-hidden', !data.isMobile);
   bankPanel.classList.toggle('is-hidden', data.isMobile);
 }
