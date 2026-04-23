@@ -1,5 +1,10 @@
 const itemsBody = document.getElementById('itemsBody');
 const itemTemplate = document.getElementById('itemTemplate');
+const homeScreen = document.getElementById('homeScreen');
+const invoiceApp = document.getElementById('invoiceApp');
+const startInvoiceBtn = document.getElementById('startInvoiceBtn');
+const previewInvoiceLink = document.getElementById('previewInvoiceLink');
+const backHomeBtn = document.getElementById('backHomeBtn');
 const subtotalEl = document.getElementById('subtotal');
 const vatEl = document.getElementById('vat');
 const grandTotalEl = document.getElementById('grandTotal');
@@ -31,6 +36,24 @@ const currencyFormat = new Intl.NumberFormat('fr-FR', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2
 });
+
+let autoRedirectTimer = null;
+
+function showInvoiceApp() {
+  if (autoRedirectTimer) {
+    clearTimeout(autoRedirectTimer);
+    autoRedirectTimer = null;
+  }
+  homeScreen.classList.add('is-hidden');
+  invoiceApp.classList.remove('is-hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showHomeScreen() {
+  invoiceApp.classList.add('is-hidden');
+  homeScreen.classList.remove('is-hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 function formatCurrency(value) {
   return `${currencyFormat.format(value)} FC`;
@@ -247,6 +270,15 @@ addRowBtn.addEventListener('click', () => {
   updateTotals();
 });
 
+startInvoiceBtn.addEventListener('click', showInvoiceApp);
+
+previewInvoiceLink.addEventListener('click', (event) => {
+  event.preventDefault();
+  showInvoiceApp();
+});
+
+backHomeBtn.addEventListener('click', showHomeScreen);
+
 printBtn.addEventListener('click', () => {
   window.print();
 });
@@ -283,3 +315,11 @@ invoiceDate.value = `${year}-${month}-${day}`;
 createRow('Prestation initiale', 1, 0);
 createRow('Frais de service', 2, 0);
 updateTotals();
+
+if (window.location.hash === '#facture') {
+  showInvoiceApp();
+} else {
+  autoRedirectTimer = setTimeout(() => {
+    showInvoiceApp();
+  }, 4500);
+}

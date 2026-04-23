@@ -8,13 +8,30 @@
   <script src="paye.js" defer></script>
 </head>
 <body>
-  <div class="app">
+  <section class="home-screen" id="homeScreen" aria-label="Page d'accueil">
+    <div class="home-overlay"></div>
+    <div class="home-content">
+      <p class="home-kicker">Facturation RDC</p>
+      <h1>Bienvenue sur votre espace de facture numerique</h1>
+      <p>
+        Cree rapidement une facture claire, conforme et prete a imprimer. Commence par l'accueil puis accede au generateur interactif.
+      </p>
+      <p class="home-hint">Redirection automatique vers la facture dans quelques secondes.</p>
+      <div class="home-actions">
+        <button class="btn-primary" id="startInvoiceBtn" type="button">Commencer une facture</button>
+        <a href="#" id="previewInvoiceLink">Voir un apercu du generateur</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="app is-hidden" id="invoiceApp">
     <div class="toolbar hidden-print">
       <div>
         <h1>Générateur de facture RDC</h1>
         <p>Modèle interactif avec TVA à 16 %, base imposable, net à payer et impression propre.</p>
       </div>
       <div class="actions">
+        <button class="btn-secondary" id="backHomeBtn" type="button">Retour accueil</button>
         <button class="btn-secondary" id="addRowBtn" type="button">Ajouter une ligne</button>
         <button class="btn-primary" id="printBtn" type="button">Imprimer</button>
       </div>
